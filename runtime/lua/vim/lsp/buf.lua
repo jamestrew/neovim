@@ -448,8 +448,9 @@ function M.document_symbol(opts)
 end
 
 --- @param call_hierarchy_items lsp.CallHierarchyItem[]?
+--- @return lsp.CallHierarchyItem?
 local function pick_call_hierarchy_item(call_hierarchy_items)
-  if not call_hierarchy_items then
+  if not call_hierarchy_items or vim.tbl_isempty(call_hierarchy_items) then
     return
   end
   if #call_hierarchy_items == 1 then
