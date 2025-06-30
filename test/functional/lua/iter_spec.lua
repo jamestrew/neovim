@@ -550,4 +550,99 @@ describe('vim.iter', function()
       { item_3 = 'test' },
     }, output)
   end)
+
+  describe('cycle()', function()
+    -- TODO:
+    -- - [ ] totable() is dangerous without `take()` -- can loop forever
+    -- - [ ] rev()
+
+    --[[
+Iter:map
+Iter:rev
+Iter:pop
+Iter:nth
+Iter:any
+Iter:all
+Iter:each
+Iter:join
+Iter:fold
+Iter:next
+Iter:peek
+Iter:find
+Iter:take
+Iter:skip
+Iter:last
+Iter:rfind
+Iter:rpeek
+Iter:rskip
+Iter:slice
+Iter.new
+Iter:filter
+Iter:flatten
+Iter:totable
+Iter:enumerate
+
+
+    ]]
+    it('next() cycles through the iterator', function()
+      local it = vim.iter.cycle({ 1, 2, 3 })
+      eq(1, it:next())
+      eq(2, it:next())
+      eq(3, it:next())
+      eq(1, it:next())
+      eq(2, it:next())
+      eq(3, it:next())
+    end)
+
+    it('totable() on its own', function()
+      local it = vim.iter.cycle({ 1, 2, 3, 4, 5 })
+      eq({ 1, 2, 3, 4, 5 }, it:totable())
+    end)
+
+    it('filter()', function()
+      local it = vim.iter.cycle({ 1, 2, 3, 4 }):filter(function(v)
+        return v % 2 == 0
+      end)
+      eq(2, it:next())
+      eq(4, it:next())
+      eq(2, it:next())
+    end)
+
+    it('take()', function()
+      local it = vim.iter.cycle({ 1, 2, 3 }):take(5)
+      eq({ 1, 2, 3, 1, 2 }, it:totable())
+    end)
+
+    it('rev()', function()
+      local it = vim.iter.cycle({ 1, 2, 3 }):rev()
+      -- now cycling {1,3,2,1,3,...}
+      --              ^ from here
+      eq(1, it:next())
+      eq(3, it:next())
+      eq(2, it:next())
+      eq(1, it:next())
+      eq(3, it:next())
+      eq(2, it:next())
+      eq(1, it:next())
+
+      -- back to {1,2,3,1,...}
+      --            ^ from here since last next() was 2
+      it:rev()
+      eq(2, it:next())
+      eq(3, it:next())
+      eq(1, it:next())
+      eq(2, it:next())
+      eq(3, it:next())
+    end)
+
+    -- it('nth()', function()
+    --   local it = vim.iter.cycle({ 1, 2, 3 })
+    --   eq(1, it:nth(1))
+    --   eq(2, it:nth(2))
+    --   eq(3, it:nth(3))
+    --   eq(1, it:nth(4))
+    --   eq(2, it:nth(5))
+    --   eq(3, it:nth(6))
+    -- end)
+  end)
 end)

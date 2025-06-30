@@ -1081,6 +1081,85 @@ function ArrayIter.new(t)
   return it
 end
 
+---
+---@nodoc
+---@class CycleIter : Iter
+---@field private table table Underlying table data
+---@field private idx number Index to the table iterator
+---@field private inc number Increment direction (1 or -1)
+local CycleIter = {}
+CycleIter.__index = setmetatable(CycleIter, Iter)
+CycleIter.__call = function(self)
+  return self:next()
+end
+
+---comment
+---@param src table Array-like table.
+---@return Iter
+---@private
+function CycleIter.new(src)
+  if type(src) ~= 'table' then
+    error('cycle() requires an array-like table')
+  end
+
+  local t = {}
+  for k, v in pairs(src) do
+    if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
+      error('cycle() requires an array-like table')
+    end
+    t[#t + 1] = v -- Coerce to list-like table.
+  end
+
+  local it = { table = t, idx = 1, inc = 1 }
+  setmetatable(it, CycleIter)
+  return it
+end
+
+---
+---@return any
+---@private
+function CycleIter:next()
+  if #self.table == 0 then
+    return nil
+  end
+
+  local v = self.table[self.idx]
+  self.idx = self.idx + self.inc
+
+  if self.idx > #self.table then
+    self.idx = 1
+  elseif self.idx < 1 then
+    self.idx = #self.table
+  end
+
+  return v
+end
+
+
+function CycleIter:totable()
+  return self:take(#self.table):totable()
+end
+
+--- Reverses the direction of the cycle iterator.
+function CycleIter:rev()
+  self.inc = -self.inc
+  -- if self.inc > 0 and self.idx == #self.table then
+  --     self.idx = 1
+  -- elseif self.inc < 0 and self.idx == 1 then
+  --     self.idx = #self.table
+  -- else
+  --     self.idx = self.idx + self.inc
+  -- end
+  return self
+end
+
+--- todo
+---@param t table
+---@return Iter
+function M.cycle(t)
+  return CycleIter.new(t)
+end
+
 return setmetatable(M, {
   __call = function(_, ...)
     return Iter.new(...)
